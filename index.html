@@ -781,10 +781,7 @@ Escreva a reflexão:`}]
     });
     const data = await resp.json();
     const txt = data.content.map(i=>i.text||'').join('').trim();
-    document.getElementById('rfx-body').innerHTML = `<div class="rfx-body">${txt.replace(/
-
-/g,'</div><div class="rfx-body" style="margin-top:10px;">').replace(/
-/g,'<br>')}</div>`;
+    document.getElementById('rfx-body').innerHTML = '<div class="rfx-body">' + txt + '</div>';
   }catch(e){
     document.getElementById('rfx-body').innerHTML = '<div class="rfx-body" style="opacity:.6;">Não foi possível gerar a reflexão. Verifique sua conexão.</div>';
   }
