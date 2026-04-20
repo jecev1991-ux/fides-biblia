@@ -772,11 +772,7 @@ async function gerarReflexao(){
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
         system:`Você é um diácono católico especializado em espiritualidade. Escreva uma reflexão pastoral de 3 parágrafos sobre o Evangelho do dia, inspirada nos ensinamentos dos Papas (João Paulo II, Bento XVI, Francisco). Linguagem acolhedora, profunda e prática. Máximo 200 palavras. Apenas o texto da reflexão, sem títulos ou formatação markdown.`,
-        messages:[{role:'user',content:`Evangelho: ${ref}
-
-"${ev}"
-
-Escreva a reflexão:`}]
+        messages:[{role:'user',content:'Evangelho: '+ref+'\n\n"'+ev+'"\n\nEscreva a reflexão:'}]
       })
     });
     const data = await resp.json();
