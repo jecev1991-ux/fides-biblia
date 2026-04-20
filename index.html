@@ -218,7 +218,10 @@ main::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px;}
   <div class="my-reflex">
     <div class="my-reflex-hd">✍️ Minha Reflexão Pessoal <span id="saved-badge"></span></div>
     <textarea id="my-txt" placeholder="O que Deus fala ao seu coração hoje?..."></textarea>
-    <button class="btn-save" onclick="salvar()">💾 Salvar reflexão</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn-save" onclick="salvar()" style="margin-top:0;">💾 Salvar reflexão</button>
+      <button class="btn-save" onclick="compartilharWhats()" style="margin-top:0;background:linear-gradient(135deg,#075E54,#25D366);color:#fff;">📲 WhatsApp</button>
+    </div>
   </div>
 
   <div class="footer"><strong>Diác. Rômulo Guerra</strong><br>Fides – Bíblia Católica</div>
@@ -523,6 +526,27 @@ function salvar(){
   const b = document.getElementById('saved-badge');
   b.innerHTML = '<span class="saved">✓ Salvo</span>';
   setTimeout(()=>b.innerHTML='', 2500);
+}
+
+// ── COMPARTILHAR NO WHATSAPP ──
+function compartilharWhats(){
+  const ref  = document.getElementById('ev-ref').textContent.trim();
+  const ev   = document.getElementById('ev-txt').textContent.trim();
+  const rfx  = document.getElementById('rfx-body').textContent.trim();
+  const minha = document.getElementById('my-txt').value.trim();
+
+  let texto = '✝️ *EVANGELHO DO DIA*\n';
+  texto += '*' + ref + '*\n\n';
+  texto += ev + '\n\n';
+  texto += '✦ *REFLEXÃO INSPIRADA NOS PAPAS*\n\n';
+  texto += rfx;
+  if(minha){
+    texto += '\n\n✍️ *MINHA REFLEXÃO*\n\n';
+    texto += minha;
+  }
+  texto += '\n\n_Fides – Bíblia Católica_\n_Diác. Rômulo Guerra_';
+
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
 }
 try{
   const saved = localStorage.getItem('fides_reflexao_'+now.toDateString());
