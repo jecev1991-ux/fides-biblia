@@ -731,10 +731,10 @@ async function buscarVersiculo(){
   titulo.textContent = q;
   versDiv.innerHTML = '<div class="pass-loading"><div class="dots"><span></span><span></span><span></span></div><span>Buscando passagem...</span></div>';
   try{
-    const resp = await fetch('https://bible-api.com/',{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
         system:`Você é um estudioso da Bíblia Católica (com os livros deuterocanônicos). Quando o usuário pedir uma passagem bíblica, retorne APENAS um JSON no formato:
@@ -765,7 +765,7 @@ async function gerarReflexao(){
   const ref = document.getElementById('ev-ref').textContent;
   const ev  = document.getElementById('ev-txt').textContent;
   try{
-    const resp = await fetch('https://bible-api.com/',{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
