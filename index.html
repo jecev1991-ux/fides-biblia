@@ -140,6 +140,9 @@ main::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px;}
 .erro-msg{color:rgba(201,168,76,.5);font-style:italic;font-size:.86rem;padding:12px 0;line-height:1.6;}
 .back-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);border-radius:20px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;color:var(--go);cursor:pointer;margin-bottom:12px;transition:all .2s;letter-spacing:.08em;}
 .back-btn:active{background:rgba(201,168,76,.2);}
+.cap-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:30px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:20px;font-size:1.2rem;color:var(--go);cursor:pointer;transition:all .2s;line-height:1;}
+.cap-btn:active{background:rgba(201,168,76,.3);transform:scale(.93);}
+.cap-btn:disabled{opacity:.25;cursor:default;}
 
 /* ORAÇÕES */
 .orac-item{background:linear-gradient(135deg,rgba(27,94,59,.25),rgba(10,26,18,.5));border:1px solid rgba(201,168,76,.16);border-radius:12px;margin-bottom:8px;overflow:hidden;}
@@ -176,8 +179,8 @@ main::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px;}
 <div id="splash">
   <div class="sp-icon"><img src="https://jecev1991-ux.github.io/fides-biblia/icon.png" onerror="this.style.display='none'" alt="Fides"></div>
   <div class="sp-title">FIDES</div>
-  <div class="sp-sub">Bíblia FIDES</div>
-  <div class="sp-author">...</div>
+  <div class="sp-sub">Bíblia Católica</div>
+  <div class="sp-author">Diác. Rômulo Guerra</div>
   <div class="sp-bar"><div class="sp-bar-fill"></div></div>
 </div>
 
@@ -194,7 +197,6 @@ main::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px;}
   <button class="tb on" onclick="go('home',this)">🏠 Início</button>
   <button class="tb" onclick="go('biblia',this)">📖 Bíblia</button>
   <button class="tb" onclick="go('oracoes',this)">🙏 Orações</button>
-  <button class="tb" onclick="go('oficio',this)">📿 Ofício N.S.</button>
   <button class="tb" onclick="go('liturgia',this)">⛪ Liturgia</button>
 </nav>
 
@@ -236,7 +238,13 @@ main::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px;}
   </div>
 
   <div id="pass-result" style="display:none">
-    <button class="back-btn" onclick="voltarNav()">← Voltar</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <button class="back-btn" onclick="voltarNav()" style="margin-bottom:0;">← Voltar</button>
+      <div style="flex:1;display:flex;justify-content:flex-end;gap:6px;">
+        <button class="cap-btn" id="btn-cap-ant" onclick="mudarCapitulo(-1)" title="Capítulo anterior">‹</button>
+        <button class="cap-btn" id="btn-cap-prox" onclick="mudarCapitulo(1)" title="Próximo capítulo">›</button>
+      </div>
+    </div>
     <div class="card passagem">
       <div class="pass-titulo" id="pass-titulo"></div>
       <div id="pass-versiculos"></div>
@@ -499,11 +507,212 @@ só vós sois o Altíssimo, Jesus Cristo,
 com o Espírito Santo, na glória de Deus Pai. Amém.</div></div>
   </div>
 
+  <div class="orac-item" id="o10">
+    <div class="orac-hd" onclick="toggleOrac('o10')">
+      <div class="orac-hl"><span class="orac-ic">📿</span><span class="orac-nm">Ofício Completo de Nossa Senhora</span></div>
+      <span class="orac-ar">›</span>
+    </div>
+    <div class="orac-bd"><div class="orac-txt">
+<em style="color:var(--gl2);font-size:.78rem;">Ofício de Nossa Senhora ou da Imaculada Conceição — origem medieval (c. 1670), composto pelo franciscano Frei Bernardino de Bustis, aprovado pelo Papa Inocêncio XI em 1678 e popularizado no Nordeste do Brasil por Frei Damião.</em>
+
+<strong style="color:var(--go);">— MATINAS —</strong>
+V. Abri-me, ó Senhor, a boca.
+R. Para bendizer o vosso santo nome.
+V. Purificai o meu coração e os meus lábios.
+R. Para que dignamente eu possa rezar este Ofício.
+
+<em>Hino:</em>
+Dai-me voz, Virgem Maria,
+Dai-me voz para vos louvar,
+Dai ao mundo alegria
+E dai força ao meu rezar.
+
+Antífona: Bendita és tu entre as mulheres,
+e bendito é o fruto do teu ventre.
+V. Rogai por nós, Santa Mãe de Deus.
+R. Para que sejamos dignos das promessas de Cristo.
+
+<em>Oração:</em>
+Senhor Deus, que vos aprouve preparar uma digna habitação para o vosso Filho no seio imaculado da Virgem Maria, concedei-nos, por vossa graça, que, seguindo os seus passos e imitando as suas virtudes, alcancemos a vida eterna. Por Cristo Nosso Senhor. Amém.
+
+<strong style="color:var(--go);">— LAUDES —</strong>
+V. Dignai-vos, ó Deus, em me socorrer.
+R. Senhor, apressai-vos em me ajudar.
+Glória ao Pai, ao Filho e ao Espírito Santo.
+Como era no princípio, agora e sempre,
+por todos os séculos dos séculos. Amém.
+
+Antífona: Maria foi exaltada acima dos coros dos anjos.
+
+<em>Salmo 62:</em>
+Ó Deus, tu és o meu Deus, desde o alvorecer te busco;
+minha alma tem sede de ti, meu corpo anseia por ti,
+como terra árida, seca, sem água.
+
+V. Bendita sois entre as mulheres.
+R. E bendito é o fruto do vosso ventre, Jesus.
+
+<em>Oração:</em>
+Ó Virgem Imaculada, Mãe de Deus e Mãe nossa, vós que sois a aurora da salvação, intercedei por nós junto ao vosso divino Filho, para que ele nos conceda a graça de viver segundo o Evangelho e alcançarmos a glória eterna. Amém.
+
+<strong style="color:var(--go);">— PRIMA (6h) —</strong>
+V. Dignai-vos, ó Deus, em me socorrer.
+R. Senhor, apressai-vos em me ajudar.
+
+Antífona: Abençoada és tu, Virgem Maria,
+e digna de todo louvor.
+
+<em>Hino:</em>
+Já nasce a luz do novo dia,
+clamemos todos com alegria:
+Ave Maria, Ave Maria!
+
+V. Rogai por nós, Santa Mãe de Deus.
+R. Para que sejamos dignos das promessas de Cristo.
+
+<em>Oração:</em>
+Senhor, ao começar este dia, confiamos à intercessão da Virgem Maria todas as nossas obras, palavras e pensamentos, para que tudo seja feito para a vossa glória. Por Cristo Nosso Senhor. Amém.
+
+<strong style="color:var(--go);">— TÉRCIA (9h) —</strong>
+V. Dignai-vos, ó Deus, em me socorrer.
+R. Senhor, apressai-vos em me ajudar.
+
+Antífona: O Espírito Santo descerá sobre ti
+e o poder do Altíssimo te cobrirá com a sua sombra.
+
+Nesta hora, o Espírito Santo desceu sobre os Apóstolos reunidos com Maria em oração. Unamo-nos ao fiat de Maria: "Eis a serva do Senhor; faça-se em mim segundo a vossa palavra."
+
+V. O Senhor realizou maravilhas em vós.
+R. Santa é a vossa alma, pura é a vossa carne.
+
+<em>Oração:</em>
+Ó Maria, Mãe de graça e de misericórdia, defendei-nos do inimigo em toda hora, e na hora da morte recebei-nos. Amém.
+
+<strong style="color:var(--go);">— SEXTA (12h) —</strong>
+V. Dignai-vos, ó Deus, em me socorrer.
+R. Senhor, apressai-vos em me ajudar.
+
+Antífona: Eis a serva do Senhor,
+faça-se em mim segundo a tua palavra.
+
+<em>Magnificat — Cântico de Maria (Lc 1,46-55):</em>
+A minha alma glorifica ao Senhor,
+e o meu espírito exulta de alegria em Deus, meu Salvador,
+porque olhou para a humildade de sua serva.
+Doravante todas as gerações me chamarão bem-aventurada,
+porque o Todo-Poderoso fez em mim maravilhas.
+Santo é o seu nome, e a sua misericórdia se estende
+de geração em geração sobre os que o temem.
+
+V. Rogai por nós, Santa Mãe de Deus.
+R. Para que sejamos dignos das promessas de Cristo.
+
+<em>Oração:</em>
+Senhor Jesus Cristo, que haveis querido nascer da Virgem Maria para nos salvar, concedei-nos, por sua intercessão, a graça de crescer na fé, esperança e caridade. Amém.
+
+<strong style="color:var(--go);">— NONA (15h) —</strong>
+V. Dignai-vos, ó Deus, em me socorrer.
+R. Senhor, apressai-vos em me ajudar.
+
+Antífona: Junto à cruz, Maria permaneceu firme —
+Mãe de Deus, amparo dos que sofrem.
+
+Na hora da Paixão do Senhor, Maria permaneceu de pé junto à Cruz, unindo sua dor à de Cristo Redentor. Meditemos hoje nos seus sofrimentos.
+
+V. Vós sois glória de Jerusalém.
+R. Vós sois alegria de Israel.
+
+<em>Oração:</em>
+Ó Rainha dos mártires, que junto à cruz suportastes o martírio da alma com paciência e amor, obtende-nos de Jesus a graça de suportar as nossas cruzes diárias com espírito cristão. Amém.
+
+<strong style="color:var(--go);">— VÉSPERAS —</strong>
+V. Dignai-vos, ó Deus, em me socorrer.
+R. Senhor, apressai-vos em me ajudar.
+
+Antífona: Bem-aventurada a Virgem Maria,
+que ao Senhor levou no seu ventre virginal.
+
+<em>Hino das Vésperas (Ave Maris Stella):</em>
+Ave, estrela dos mares,
+Mãe de Deus bendita,
+Virgem sempre intacta,
+Porta da alegria.
+
+Recebendo aquele Ave
+da boca de Gabriel,
+fundai-nos na paz verdadeira,
+transformando o nome de Eva.
+
+Soltai as cadeias dos cativos,
+dai luz aos cegos,
+afugentai os nossos males,
+pedi para nós todos os bens.
+
+Mostrai-vos nossa Mãe,
+para que por vós aceite
+nossas preces aquele
+que nasceu para ser nosso Senhor.
+
+Ó incomparável Virgem,
+suave entre todas,
+tornai-nos puros e humildes,
+livres dos pecados.
+
+Dai-nos vida santa,
+caminho seguro,
+que vendo a Jesus,
+sejamos sempre alegres. Amém.
+
+V. Rogai por nós, Santa Mãe de Deus.
+R. Para que sejamos dignos das promessas de Cristo.
+
+Antífona final: Salve, Rainha, Mãe de misericórdia,
+vida, doçura e esperança nossa!
+
+<em>Oração:</em>
+Senhor, dai-nos a graça de sermos protegidos pela intercessão da Bem-aventurada Virgem Maria em todas as nossas aflições e necessidades. Por Cristo Nosso Senhor. Amém.
+
+<strong style="color:var(--go);">— COMPLETAS —</strong>
+V. Dignai-vos, ó Deus, em me socorrer.
+R. Senhor, apressai-vos em me ajudar.
+
+Antífona: Sob a tua proteção nos refugiamos,
+Santa Mãe de Deus.
+
+Sob vossa proteção nos acolhemos,
+Santa Mãe de Deus.
+Não desprezeis as nossas súplicas em nossas necessidades,
+mas livrai-nos sempre de todos os perigos,
+ó Virgem gloriosa e bendita.
+
+V. Rogai por nós, Santa Mãe de Deus.
+R. Para que sejamos dignos das promessas de Cristo.
+
+<em>Antífona Final — Salve Rainha:</em>
+Salve, Rainha, Mãe de misericórdia,
+vida, doçura e esperança nossa, salve!
+A vós bradamos, os degredados filhos de Eva;
+a vós suspiramos, gemendo e chorando
+neste vale de lágrimas.
+Eia, pois, advogada nossa,
+esses vossos olhos misericordiosos a nós volvei;
+e depois deste desterro,
+mostrai-nos Jesus, bendito fruto do vosso ventre.
+Ó clemente! ó piedosa! ó doce Virgem Maria!
+Rogai por nós, Santa Mãe de Deus,
+para que sejamos dignos das promessas de Cristo. Amém.
+
+V. Rogai por nós, Santa Mãe de Deus.
+R. Para que sejamos dignos das promessas de Cristo.
+
+<em>Oração final:</em>
+Ó Deus, cujo Filho Unigênito, pela sua vida, morte e ressurreição, nos alcançou o prêmio da salvação eterna, concedei-nos, por intercessão da Imaculada Virgem Maria, que, rezando este Ofício com devoção, sejamos por vós iluminados e conduzidos à vida eterna. Por Cristo Nosso Senhor. Amém.
+    </div></div>
+  </div>
+
   <div class="footer"><strong>Diác. Rômulo Guerra</strong><br>Fides – Bíblia Católica</div>
 </div>
 </section>
-
-<!-- OFÍCIO -->
 <section id="oficio" class="sec">
 <div class="pad">
   <div class="card" style="margin-bottom:14px;">
@@ -749,6 +958,18 @@ function voltarNav(){
   document.getElementById('bib-nav').style.display='block';
 }
 
+// ── NAVEGAÇÃO DE CAPÍTULOS ──
+let _capAtual = {livro:'', cap:1, abrev:'', isDeuterocanonico:false};
+
+function mudarCapitulo(delta){
+  const novoC = _capAtual.cap + delta;
+  if(novoC < 1) return;
+  _capAtual.cap = novoC;
+  const q = _capAtual.livro + ' ' + novoC;
+  document.getElementById('bib-inp').value = q;
+  buscarVersiculo();
+}
+
 // ── MAPEAMENTO livro PT → abreviatura API ──
 const livroMap = {
   'gênesis':'GEN','êxodo':'EXO','levítico':'LEV','números':'NUM','deuteronômio':'DEU',
@@ -800,11 +1021,22 @@ async function buscarVersiculo(){
   titulo.textContent = q;
   vDiv.innerHTML = '<div class="pass-loading"><div class="dots"><span></span><span></span><span></span></div><span>Buscando passagem...</span></div>';
 
-  // Verificar se é livro deuterocanônico
-  const qLower = q.toLowerCase().split(' ')[0] === '1' || q.toLowerCase().split(' ')[0] === '2'
-    ? q.toLowerCase().split(' ').slice(0,2).join(' ')
-    : q.toLowerCase().split(' ')[0];
+  // Extrair livro e capítulo para controle de navegação
+  const partesNav = q.split(/\s+/);
+  const ultimaNav = partesNav[partesNav.length-1];
+  if(/^\d+[:\-]?\d*$/.test(ultimaNav) && partesNav.length > 1){
+    const livroNav = partesNav.slice(0,-1).join(' ');
+    const capNav = parseInt(ultimaNav.split(':')[0].split('-')[0]) || 1;
+    _capAtual.livro = livroNav;
+    _capAtual.cap   = capNav;
+  } else {
+    _capAtual.livro = q;
+    _capAtual.cap   = 1;
+  }
+  // Atualizar botões
+  document.getElementById('btn-cap-ant').disabled = (_capAtual.cap <= 1);
 
+  // Verificar se é livro deuterocanônico
   const deutKey = Object.keys(passagensEmbutidas).find(k => q.toLowerCase().startsWith(k));
   if(deutKey){
     titulo.textContent = q + ' (Bíblia Católica)';
@@ -897,45 +1129,66 @@ async function carregarEvangelhoEReflexao(){
   const evEl  = document.getElementById('ev-txt');
   const rfxEl = document.getElementById('rfx-body');
 
-  // Passo 1: Buscar o Evangelho do dia via Claude com web_search
   const hoje = new Date();
-  const dataStr = hoje.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const dataStr = hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const dataISO = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
 
+  // Tentar buscar da API CNBB (evangelizo.us é CORS-friendly)
+  let evRef = '', evTexto = '';
+  try {
+    const r = await fetch(`https://evangelizo.org/api/pt/${dataISO}`);
+    if(r.ok){
+      const d = await r.json();
+      evRef   = d.liturgy?.gospel?.reference || '';
+      evTexto = d.liturgy?.gospel?.text || '';
+    }
+  } catch(_){}
+
+  // Se não conseguiu da API externa, usa Claude para gerar com a data
+  if(!evTexto){
+    try{
+      const resp = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:900,
+          system:`Você é um especialista em liturgia católica com conhecimento do Calendário Litúrgico Romano.
+Retorne SOMENTE um objeto JSON válido, sem markdown, sem blocos de código, sem texto adicional.
+Formato exato: {"referencia":"Jo 3,16-21","texto":"Texto completo do Evangelho..."}`,
+          messages:[{role:'user',content:`Hoje é ${dataStr}. Qual é o Evangelho do dia no Calendário Litúrgico Católico Romano? Retorne o JSON com a referência e o texto completo em português.`}]
+        })
+      });
+      const data = await resp.json();
+      if(data.error) throw new Error(data.error.message);
+      const raw = data.content.map(i=>i.text||'').join('').trim();
+      const m = raw.match(/\{[^{}]*"referencia"[^{}]*"texto"[^{}]*\}/s) || raw.match(/\{[\s\S]*\}/);
+      if(m){
+        const ev = JSON.parse(m[0]);
+        evRef   = ev.referencia || '';
+        evTexto = ev.texto || '';
+      }
+    }catch(err){ console.warn('Evangelho API erro:',err); }
+  }
+
+  if(evTexto){
+    refEl.textContent = evRef || 'Evangelho do Dia';
+    evEl.removeAttribute('style');
+    evEl.textContent = evTexto;
+  } else {
+    refEl.textContent = '— Evangelho do Dia —';
+    evEl.style.cssText='color:rgba(201,168,76,.5);font-style:italic;font-size:.86rem;';
+    evEl.textContent = 'Não foi possível carregar o Evangelho. Verifique sua conexão e recarregue a página.';
+    rfxEl.innerHTML='<div class="rfx-body" style="color:rgba(247,240,227,.5);font-style:italic;">Reflexão indisponível.</div>';
+    return;
+  }
+
+  // Gerar reflexão com base no Evangelho carregado
   try{
-    const resp1 = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:600,
-        tools:[{"type":"web_search_20250305","name":"web_search"}],
-        system:`Você é um assistente católico. Busque o Evangelho do dia de hoje (${dataStr}) do Calendário Litúrgico Católico Romano.
-Responda APENAS em JSON válido, sem nenhum texto adicional, nenhum markdown, sem blocos de código. Formato exato:
-{"referencia":"Jo 3,16","texto":"Texto completo do Evangelho aqui..."}`,
-        messages:[{role:'user',content:`Qual é o Evangelho do dia de hoje, ${dataStr}, no calendário litúrgico católico? Busque na web e retorne a referência e o texto completo em JSON.`}]
-      })
-    });
-    const data1 = await resp1.json();
-    if(data1.error) throw new Error(data1.error.message);
-
-    const txt1 = data1.content.map(i=>i.text||'').join('').trim();
-    // Extrair JSON da resposta
-    const jsonMatch = txt1.match(/\{[\s\S]*"referencia"[\s\S]*"texto"[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('JSON não encontrado na resposta');
-    const ev = JSON.parse(jsonMatch[0]);
-
-    // Atualizar Evangelho na tela
-    refEl.textContent = ev.referencia || 'Evangelho do Dia';
-    evEl.style.color = '';
-    evEl.style.fontStyle = '';
-    evEl.style.fontSize = '';
-    evEl.textContent = ev.texto;
-
-    // Passo 2: Gerar reflexão com base no Evangelho obtido
     const resp2 = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{
@@ -946,111 +1199,27 @@ Responda APENAS em JSON válido, sem nenhum texto adicional, nenhum markdown, se
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:400,
-        system:'Você é um diácono católico. Escreva uma reflexão pastoral de 2 parágrafos sobre o Evangelho do dia, inspirada nos ensinamentos dos Papas João Paulo II, Bento XVI e Francisco. Linguagem acolhedora e prática. Máximo 150 palavras. Apenas o texto, sem títulos.',
-        messages:[{role:'user',content:'Evangelho: '+ev.referencia+'\n"'+ev.texto.substring(0,400)+'"'}]
+        system:'Você é um diácono católico. Escreva uma reflexão pastoral de 2 parágrafos sobre o Evangelho do dia, com espiritualidade inspirada nos Papas João Paulo II, Bento XVI e Francisco. Linguagem acolhedora, prática e próxima do povo. Máximo 150 palavras. Apenas o texto corrido, sem títulos nem formatação.',
+        messages:[{role:'user',content:`Evangelho: ${evRef}\n"${evTexto.substring(0,500)}"`}]
       })
     });
     const data2 = await resp2.json();
     if(data2.error) throw new Error(data2.error.message);
     const rfx = data2.content.map(i=>i.text||'').join('').trim();
     rfxEl.innerHTML = '<div class="rfx-body">'+rfx+'</div>';
-
-  }catch(e){
-    console.warn('Erro ao carregar Evangelho:', e);
-    // Fallback: buscar só o Evangelho do dia com data atual via Claude sem search
-    try{
-      const resp3 = await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
-        body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',
-          max_tokens:700,
-          system:`Você é um assistente católico especializado em liturgia. Retorne o Evangelho do dia de hoje (${dataStr}) conforme o Calendário Litúrgico Católico Romano. Responda SOMENTE em JSON puro, sem markdown nem explicações. Formato: {"referencia":"Lc 24,35-48","texto":"Texto completo aqui..."}`,
-          messages:[{role:'user',content:`Evangelho do dia ${dataStr} — retorne em JSON.`}]
-        })
-      });
-      const data3 = await resp3.json();
-      const txt3 = data3.content.map(i=>i.text||'').join('').trim();
-      const jsonMatch3 = txt3.match(/\{[\s\S]*"referencia"[\s\S]*"texto"[\s\S]*\}/);
-      if(!jsonMatch3) throw new Error('fallback json inválido');
-      const ev3 = JSON.parse(jsonMatch3[0]);
-      refEl.textContent = ev3.referencia || 'Evangelho do Dia';
-      evEl.style.color=''; evEl.style.fontStyle=''; evEl.style.fontSize='';
-      evEl.textContent = ev3.texto;
-
-      const resp4 = await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
-        body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',
-          max_tokens:400,
-          system:'Você é um diácono católico. Escreva uma reflexão pastoral de 2 parágrafos sobre o Evangelho do dia, inspirada nos Papas João Paulo II, Bento XVI e Francisco. Linguagem acolhedora e prática. Máximo 150 palavras. Apenas o texto, sem títulos.',
-          messages:[{role:'user',content:'Evangelho: '+ev3.referencia+'\n"'+ev3.texto.substring(0,400)+'"'}]
-        })
-      });
-      const data4 = await resp4.json();
-      const rfx4 = data4.content.map(i=>i.text||'').join('').trim();
-      rfxEl.innerHTML = '<div class="rfx-body">'+rfx4+'</div>';
-
-    }catch(e2){
-      refEl.textContent = '⚠ Sem conexão';
-      evEl.style.color='rgba(201,168,76,.5)';
-      evEl.style.fontStyle='italic';
-      evEl.style.fontSize='.86rem';
-      evEl.textContent = 'Não foi possível carregar o Evangelho do dia. Verifique sua conexão com a internet.';
-      rfxEl.innerHTML = `<div class="rfx-body">
-        O amor que Cristo nos revela não é um sentimento passageiro, mas uma entrega total — como nos ensinou João Paulo II: o homem não pode viver sem amor. Permanecermos no amor de Jesus significa guardar Seus mandamentos com alegria, não por obrigação.
-        <br><br>
-        Como nos lembrou Francisco, a alegria do Evangelho enche o coração de quem se encontra com Jesus. Que este dia seja uma oportunidade de amar a quem está ao nosso lado.
-      </div>`;
-    }
+  }catch(e2){
+    rfxEl.innerHTML = `<div class="rfx-body">O Evangelho de hoje nos convida a uma conversão do coração. Como ensinou São João Paulo II, o homem não pode viver sem amor — e é exatamente isso que Cristo nos oferece gratuitamente.<br><br>Que esta Palavra, acolhida com fé, transforme o nosso dia e nos torne sinais vivos do amor de Deus para todos ao nosso redor. Amém.</div>`;
   }
 }
+
 // ── LITURGIA DAS HORAS ──
 async function carregarLiturgiaHoras(){
   const el = document.getElementById('lit-horas-txt');
-  el.style.color='rgba(247,240,227,.4)';
-  el.style.fontStyle='italic';
+  el.style.cssText='color:rgba(247,240,227,.4);font-style:italic;';
   el.textContent='Carregando Liturgia das Horas...';
   document.getElementById('lit1').classList.add('op');
-  const dataStr = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  try{
-    const resp = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:700,
-        tools:[{"type":"web_search_20250305","name":"web_search"}],
-        system:`Você é um assistente de liturgia católica. Busque e retorne a Liturgia das Horas de hoje (${dataStr}) — especialmente as Laudes (manhã) e Vésperas (tarde), com os salmos, hino e orações indicados para o dia no calendário litúrgico romano. Seja claro e detalhado.`,
-        messages:[{role:'user',content:`Liturgia das Horas de hoje, ${dataStr} — Laudes e Vésperas.`}]
-      })
-    });
-    const data = await resp.json();
-    const txt = data.content.map(i=>i.text||'').join('').trim();
-    el.style.color=''; el.style.fontStyle='';
-    el.innerHTML = txt.replace(/\n/g,'<br>');
-  }catch(e){
-    el.textContent='Não foi possível carregar. Verifique sua conexão.';
-  }
-}
-
-// ── LITURGIA DIÁRIA ──
-async function carregarLiturgiaDiaria(){
-  const el = document.getElementById('lit-diaria-txt');
-  el.style.color='rgba(247,240,227,.4)';
-  el.style.fontStyle='italic';
-  el.textContent='Carregando leituras do dia...';
-  document.getElementById('lit2').classList.add('op');
-  const dataStr = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const hoje = new Date();
+  const dataStr = hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   try{
     const resp = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -1058,16 +1227,47 @@ async function carregarLiturgiaDiaria(){
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:900,
-        tools:[{"type":"web_search_20250305","name":"web_search"}],
-        system:`Você é um assistente de liturgia católica. Busque e retorne a Liturgia Diária completa de hoje (${dataStr}): tempo litúrgico, cor litúrgica, 1ª leitura (referência + texto), Salmo Responsorial (referência + resposta), 2ª leitura se houver (referência + texto) e Evangelho (referência + texto completo). Formato claro e bem estruturado.`,
-        messages:[{role:'user',content:`Liturgia Diária de hoje, ${dataStr} — todas as leituras.`}]
+        system:`Você é um especialista em Liturgia das Horas Católica. Descreva a Liturgia das Horas de hoje (${dataStr}) segundo o Calendário Romano: tempo litúrgico, cor, hino, antífonas, salmos e orações das Laudes e Vésperas. Seja detalhado e devocional.`,
+        messages:[{role:'user',content:`Liturgia das Horas de hoje, ${dataStr}. Descreva as Laudes e Vésperas com salmos, hinos e orações.`}]
       })
     });
     const data = await resp.json();
+    if(data.error) throw new Error(data.error.message);
     const txt = data.content.map(i=>i.text||'').join('').trim();
-    el.style.color=''; el.style.fontStyle='';
-    el.innerHTML = txt.replace(/\n/g,'<br>');
+    el.removeAttribute('style');
+    el.innerHTML = txt.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--go);">$1</strong>').replace(/\n/g,'<br>');
   }catch(e){
+    el.style.cssText='color:rgba(201,168,76,.5);font-style:italic;';
+    el.textContent='Não foi possível carregar. Verifique sua conexão.';
+  }
+}
+
+// ── LITURGIA DIÁRIA ──
+async function carregarLiturgiaDiaria(){
+  const el = document.getElementById('lit-diaria-txt');
+  el.style.cssText='color:rgba(247,240,227,.4);font-style:italic;';
+  el.textContent='Carregando leituras do dia...';
+  document.getElementById('lit2').classList.add('op');
+  const hoje = new Date();
+  const dataStr = hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:`Você é um especialista em liturgia católica. Apresente a Liturgia Diária completa de hoje (${dataStr}) segundo o Calendário Romano: tempo litúrgico, cor litúrgica, santo do dia (se houver), 1ª Leitura (referência e texto completo), Salmo Responsorial (referência, resposta e estrofes), 2ª Leitura se houver (domingo/festa), Evangelho (referência e texto completo). Formato claro, bem estruturado e devocional.`,
+        messages:[{role:'user',content:`Liturgia Diária completa de hoje, ${dataStr} — todas as leituras em português.`}]
+      })
+    });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error.message);
+    const txt = data.content.map(i=>i.text||'').join('').trim();
+    el.removeAttribute('style');
+    el.innerHTML = txt.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--go);">$1</strong>').replace(/\n/g,'<br>');
+  }catch(e){
+    el.style.cssText='color:rgba(201,168,76,.5);font-style:italic;';
     el.textContent='Não foi possível carregar. Verifique sua conexão.';
   }
 }
