@@ -1240,7 +1240,7 @@ async function buscarVersiculo(){
     return;
   }
 
-  // Tentar buscar via bible-api.com (português)
+  // Tentar buscar via bible-api.com (português) — só funciona com internet
   try{
     // Converter nome do livro para abreviatura
     const partes = q.split(/\s+/);
@@ -1262,7 +1262,7 @@ async function buscarVersiculo(){
       throw new Error('Livro não encontrado no mapeamento');
     }
 
-    // Montar URL — se ref tem ":", pega versículo específico, senão pega capítulo inteiro
+    // Montar URL
     let url;
     if(ref.includes('+') || /\d+:\d+/.test(ref)){
       const refFormatada = ref.replace('+',':');
@@ -1271,7 +1271,10 @@ async function buscarVersiculo(){
       url = `https://bible-api.com/${abrev}+${ref}?translation=almeida`;
     }
 
-    const resp = await fetch(url);
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 6000);
+    const resp = await fetch(url, {signal: ctrl.signal});
+    clearTimeout(timer);
     if(!resp.ok) throw new Error('API indisponível');
     const data = await resp.json();
 
@@ -1296,15 +1299,16 @@ async function buscarVersiculo(){
     vDiv.appendChild(nota);
 
   } catch(e){
-    // Fallback: mostrar mensagem com sugestão
+    // Fallback offline: mostrar mensagem clara
     vDiv.innerHTML = `<div class="erro-msg">
-      Não foi possível carregar "${q}".<br><br>
-      <strong style="color:rgba(201,168,76,.7);">Dica:</strong> Tente escrever assim:<br>
+      <strong style="color:rgba(201,168,76,.8);">📵 Bíblia requer conexão à internet.</strong><br><br>
+      Para buscar versículos, conecte-se à internet e tente novamente.<br><br>
+      <strong style="color:rgba(201,168,76,.7);">Dica ao buscar:</strong><br>
       • João 3:16<br>
       • Salmos 23:1<br>
       • Mateus 5:3<br>
       • Romanos 8:28<br><br>
-      <span style="font-size:.75rem;opacity:.6;">Para livros deuterocanônicos (Tobias, Judite, Macabeus, Sabedoria, Eclesiástico, Baruc), clique diretamente no livro na lista.</span>
+      <span style="font-size:.75rem;opacity:.6;">Os livros deuterocanônicos (Tobias, Judite, Macabeus, Sabedoria, Eclesiástico, Baruc) funcionam offline — clique no livro na lista.</span>
     </div>`;
   }
 }
@@ -1326,113 +1330,99 @@ function mdToHtml(t){
           .replace(/\n/g,'<br>');
 }
 
-// ── EVANGELHO DO DIA ──
-async function carregarEvangelhoEReflexao(){
+// ── BANCO DE EVANGELHOS (31 dias — rotativo pelo dia do mês) ──
+const EVANGELHOS=[
+  {ref:'Jo 3,16',txt:'"Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna."'},
+  {ref:'Mt 5,3-10',txt:'"Bem-aventurados os pobres em espírito, porque deles é o reino dos céus. Bem-aventurados os que choram, porque serão consolados. Bem-aventurados os mansos, porque herdarão a terra. Bem-aventurados os que têm fome e sede de justiça, porque serão saciados."'},
+  {ref:'Lc 15,11-24',txt:'"Um homem tinha dois filhos. O mais novo disse ao pai: Pai, dá-me a parte dos bens que me cabe. O pai partilhou os bens. Quando o filho voltou de longe, o pai o viu e, tomado de compaixão, correu, atirou-se ao seu pescoço e o cobriu de beijos."'},
+  {ref:'Jo 15,9-12',txt:'"Como o Pai me amou, assim também eu vos amei; permanecei no meu amor. Se guardardes os meus mandamentos, permanecereis no meu amor. Este é o meu mandamento: amai-vos uns aos outros como eu vos amei."'},
+  {ref:'Mc 1,14-20',txt:'"Depois que João foi preso, Jesus foi para a Galileia e proclamava: O tempo está cumprido e o Reino de Deus está próximo. Convertei-vos e crede na Boa Nova. Passando à beira do mar, viu Simão e seu irmão André, que lançavam as redes ao mar. Jesus disse-lhes: Vinde após mim."'},
+  {ref:'Lc 6,27-38',txt:'"Amai os vossos inimigos, fazei o bem aos que vos odeiam, bendizei os que vos maldizem, orai pelos que vos maltratam. Sede misericordiosos como o vosso Pai é misericordioso."'},
+  {ref:'Jo 6,35-40',txt:'"Eu sou o pão da vida. Quem vem a mim não terá fome, e quem crê em mim nunca terá sede. Esta é a vontade do meu Pai: que todo aquele que vir o Filho e nele crer tenha a vida eterna, e eu o ressuscitarei no último dia."'},
+  {ref:'Mt 6,9-13',txt:'"Portanto, orai assim: Pai nosso que estais nos céus, santificado seja o vosso nome, venha o vosso reino, seja feita a vossa vontade, assim na terra como no céu. O pão nosso de cada dia nos dai hoje."'},
+  {ref:'Jo 10,14-16',txt:'"Eu sou o bom pastor. Conheço as minhas ovelhas e elas me conhecem, como o Pai me conhece e eu conheço o Pai. Tenho ainda outras ovelhas que não são deste aprisco; também essas devo conduzir, e ouvirão a minha voz."'},
+  {ref:'Mc 10,13-16',txt:'"Deixai as crianças virem a mim; não as impeçais, porque o Reino de Deus pertence aos que são como elas. Em verdade vos digo: quem não receber o Reino de Deus como criança, não entrará nele. E abraçando-as, abençoava-as."'},
+  {ref:'Lc 1,46-55',txt:'"A minha alma glorifica ao Senhor, e o meu espírito exulta de alegria em Deus, meu Salvador, porque olhou para a humildade de sua serva. Doravante todas as gerações me chamarão bem-aventurada, porque o Todo-Poderoso fez em mim maravilhas."'},
+  {ref:'Jo 14,1-6',txt:'"Não se turbe o vosso coração. Credes em Deus, crede também em mim. Na casa de meu Pai há muitas moradas. Eu sou o caminho, a verdade e a vida. Ninguém vai ao Pai senão por mim."'},
+  {ref:'Mt 11,28-30',txt:'"Vinde a mim, todos vós que estais cansados e sobrecarregados, e eu vos aliviarei. Tomai sobre vós o meu jugo e aprendei comigo, porque sou manso e humilde de coração, e encontrareis descanso para as vossas almas."'},
+  {ref:'Lc 24,1-9',txt:'"No primeiro dia da semana, ao amanhecer, as mulheres foram ao sepulcro. Encontraram a pedra removida. Dois homens com vestes resplandecentes lhes disseram: Por que buscais entre os mortos aquele que está vivo? Não está aqui. Ressuscitou!"'},
+  {ref:'Jo 20,19-22',txt:'"À tarde daquele dia, o primeiro da semana, Jesus veio e ficou no meio deles e disse: A paz esteja convosco! Dito isto, mostrou-lhes as mãos e o lado. Então os discípulos se alegraram por verem o Senhor."'},
+  {ref:'Mc 16,15-16',txt:'"Ide por todo o mundo e proclamai o Evangelho a toda criatura. Quem crer e for batizado será salvo; quem não crer será condenado."'},
+  {ref:'Lc 4,18-19',txt:'"O Espírito do Senhor está sobre mim, porque ele me consagrou com a unção. Enviou-me a anunciar a Boa Nova aos pobres, a proclamar a libertação aos presos e aos cegos a recuperação da vista, a remir os oprimidos."'},
+  {ref:'Jo 8,12',txt:'"Jesus falou-lhes de novo: Eu sou a luz do mundo. Quem me segue não caminhará nas trevas, mas terá a luz da vida."'},
+  {ref:'Mt 22,37-40',txt:'"Jesus disse-lhe: Amarás o Senhor teu Deus com todo o teu coração, com toda a tua alma e com todo o teu espírito. Este é o maior e o primeiro mandamento. O segundo é semelhante a este: Amarás o teu próximo como a ti mesmo."'},
+  {ref:'Lc 11,9-10',txt:'"Pedi e dar-se-vos-á; buscai e encontrareis; batei e abrir-se-vos-á. Pois todo aquele que pede recebe; quem busca encontra; e a quem bate, abrir-se-á."'},
+  {ref:'Jo 11,25-26',txt:'"Jesus disse-lhe: Eu sou a ressurreição e a vida. Quem crê em mim, ainda que morra, viverá; e todo aquele que vive e crê em mim não morrerá para sempre."'},
+  {ref:'Mt 28,19-20',txt:'"Ide, pois, e fazei discípulos de todos os povos, batizando-os em nome do Pai e do Filho e do Espírito Santo, ensinando-os a guardar tudo quanto vos ordenei. E eu estarei convosco todos os dias, até a consumação dos séculos."'},
+  {ref:'Lc 2,10-11',txt:'"O anjo disse-lhes: Não temais, pois eis que vos anuncio uma grande alegria, que o será para todo o povo: hoje, na cidade de Davi, nasceu-vos um Salvador, que é Cristo Senhor."'},
+  {ref:'Jo 1,1-5',txt:'"No princípio era o Verbo, e o Verbo estava com Deus, e o Verbo era Deus. Nele estava a vida, e a vida era a luz dos homens. A luz resplandece nas trevas, e as trevas não a venceram."'},
+  {ref:'Mc 12,30-31',txt:'"Amarás o Senhor teu Deus com todo o teu coração, com toda a tua alma, com todo o teu espírito e com todas as tuas forças. O segundo é: Amarás o teu próximo como a ti mesmo. Não há mandamento maior do que estes."'},
+  {ref:'Lc 9,23',txt:'"Jesus dizia a todos: Se alguém quer vir após mim, negue-se a si mesmo, tome cada dia a sua cruz e siga-me. Pois quem quiser salvar a sua vida perdê-la-á, mas quem perder a sua vida por minha causa salvá-la-á."'},
+  {ref:'Jo 15,5',txt:'"Eu sou a videira, vós sois os ramos. Quem permanece em mim e eu nele, esse dá muito fruto; porque sem mim nada podeis fazer."'},
+  {ref:'Mt 5,14-16',txt:'"Vós sois a luz do mundo. Não se pode esconder uma cidade situada no cimo de um monte. Assim brilhe a vossa luz diante dos homens, para que vejam as vossas boas obras e glorifiquem o vosso Pai que está nos céus."'},
+  {ref:'Lc 22,19-20',txt:'"Tomando o pão, deu graças, partiu-o e deu-lho, dizendo: Isto é o meu corpo, que é dado por vós; fazei isto em memória de mim. Do mesmo modo, depois da ceia, tomou o cálice, dizendo: Este cálice é a nova aliança no meu sangue."'},
+  {ref:'Jo 13,34-35',txt:'"Dou-vos um mandamento novo: amai-vos uns aos outros como eu vos amei; amai-vos também uns aos outros. É por isto que todos conhecerão que sois meus discípulos: se tiverdes amor uns para com os outros."'},
+  {ref:'Mt 6,33',txt:'"Buscai em primeiro lugar o seu Reino e a sua justiça, e tudo mais vos será dado por acréscimo. Portanto, não vos preocupeis com o dia de amanhã, pois o dia de amanhã cuidará de si mesmo."'}
+];
+
+const REFLEXOES=[
+  'O amor de Deus não tem condições nem fronteiras. Jesus nos lembra que o Pai entregou o que tinha de mais precioso por cada um de nós. Como nos ensinou São João Paulo II: o homem não pode viver sem amor, pois foi criado para amar e ser amado.<br><br>Que esta Palavra nos mova a sair de nós mesmos e a amar com concretude — na família, no trabalho, nas pequenas situações do dia.',
+  'As bem-aventuranças são o retrato de Jesus e o programa do cristão. Bento XVI nos lembrou que ser pobre em espírito é reconhecer que tudo é dom de Deus — e isso nos liberta do egoísmo.<br><br>Peçamos hoje a graça de viver as bem-aventuranças não como utopia, mas como caminho concreto de santidade no cotidiano, como nos convida o Papa Francisco.',
+  'O pai da parábola corre ao encontro do filho — esta é a imagem de Deus que Jesus nos oferece. Não um Deus que pune, mas um Pai que espera, que perdoa, que celebra a volta.<br><br>Como ensinou Francisco: Deus não se cansa de perdoar; somos nós que nos cansamos de pedir perdão. Que esta cena toque nosso coração hoje.',
+  'Permanecer no amor de Cristo é a vocação central do cristão. Não se trata de sentimento passageiro, mas de uma decisão diária de colocar Deus no centro, como nos ensinou João Paulo II.<br><br>Que o mandamento novo do amor seja nossa resposta concreta: amando os que estão perto e os que nos são difíceis de amar.',
+  'Jesus chama e o discípulo responde — essa é a dinâmica da vocação cristã. Como disse Bento XVI, seguir Jesus não é aderir a uma ideia, mas encontrar uma Pessoa que dá sentido à vida.<br><br>Que hoje possamos ouvir essa chamada e responder com coragem, deixando o que nos impede de segui-Lo.',
+  'Amar os inimigos é o sinal mais alto do Evangelho. Francisco nos lembra que o cristão é chamado a ser fermento de misericórdia no mundo, especialmente onde há conflito.<br><br>Peçamos hoje a graça de vencer o mal com o bem, de perdoar antes de ser pedido, de ser instrumentos de paz.',
+  'Eu sou o pão da vida — Jesus se dá como alimento para nossa alma. A Eucaristia é o centro da vida cristã, onde Cristo se entrega completamente a nós.<br><br>Como ensinou João Paulo II, a Eucaristia é o coração da Igreja. Que possamos nos alimentar deste pão com fé e gratidão.',
+  'O Pai Nosso é a oração que Jesus mesmo nos ensinou. Bento XVI destacava que cada palavra desta oração é um presente do céu. Quando dizemos "venha o vosso reino", estamos pedindo que Deus reine em nosso coração antes de tudo.<br><br>Que hoje rezemos o Pai Nosso com atenção e amor, sabendo que o Pai nos ouve.',
+  'O bom Pastor conhece cada ovelha pelo nome — e esse Pastor é Jesus. Francisco nos lembra que Deus nunca abandona ninguém, mesmo quando nos perdemos nos caminhos do mundo.<br><br>Que confiemos hoje nessa proximidade do Pastor, que nos busca e nos carrega em seus ombros com ternura.',
+  'Jesus abraça as crianças — gesto que escandalizava os discípulos, mas que revela o coração de Deus. João Paulo II ensinou que as crianças nos ensinam a receber o Reino com confiança total.<br><br>Que recuperemos hoje essa simplicidade de coração, abandonando orgulhos e pretensões diante do Pai.',
+  'O Magnificat de Maria é o cântico da alma que reconhece os dons de Deus. Francisco nos diz que Maria é modelo de humildade e de gratuidade — ela não guardou o dom recebido, mas foi ao encontro de Isabel.<br><br>Que aprendamos com Maria a transformar a gratidão em serviço ao próximo.',
+  'Jesus é o caminho, a verdade e a vida. Bento XVI nos lembrava que não seguimos uma doutrina anônima, mas uma Pessoa viva que nos conduz ao Pai.<br><br>Em momentos de dúvida, voltemos ao Evangelho. Ele é a bússola que aponta sempre para Cristo, o único caminho seguro.',
+  'Jesus nos chama ao descanso — não ao ócio, mas ao descanso profundo de quem se apoia em Deus. João Paulo II ensinou que o cansaço do coração só se cura em Cristo.<br><br>Que hoje paremos um momento, respiremos fundo e nos lembremos: não estamos sozinhos. O Senhor carrega conosco o peso do dia.',
+  'A ressurreição não é apenas um dogma — é uma realidade que transforma o presente. Francisco nos diz: um cristão não pode ser pessimista, porque sabe que Cristo ressuscitou e a última palavra é a vida.<br><br>Que esta certeza nos dê alegria e esperança em todo sofrimento e dificuldade.',
+  'A paz que Jesus oferece é diferente da que o mundo dá — não é ausência de conflito, mas presença de Deus. João Paulo II repetia: não tenhais medo! O Ressuscitado está no meio de nós.<br><br>Que acolhamos essa paz como um presente e a transmitamos com nossa atitude serena e firme.',
+  'A missão é para todos — cada batizado é enviado. Francisco insiste: a Igreja não é um museu de santos perfeitos, mas um hospital de campo para os feridos da vida.<br><br>Que o Evangelho que recebemos não fique preso em nós. Levemo-lo com palavras simples, com gestos de bondade, com presença fiel.',
+  'O Espírito do Senhor nos consagra e nos envia. Bento XVI ensinava que cada cristão recebe uma unção que o torna responsável pelos pobres e excluídos.<br><br>Que hoje olhemos ao redor e vejamos quem precisa de uma palavra, de um gesto, de nossa presença. O Senhor nos enviou exatamente para isso.',
+  'Jesus é a luz do mundo — e essa luz deve iluminar nossa vida concreta. Francisco nos convida a ser cristãos de rosto aberto, não carrancudos, mas radiantes da alegria do Evangelho.<br><br>Que nossa vida irradie hoje algo do amor de Deus, para que outros o percebam sem que precisemos dizer nada.',
+  'O duplo mandamento do amor é o coração de toda a lei. João Paulo II ensinava: não existe amor a Deus sem amor ao próximo. Os dois são inseparáveis.<br><br>Que hoje a nossa oração se traduza em ato concreto: uma palavra amável, um perdão difícil, uma ajuda silenciosa.',
+  'Deus nos ouve — essa é a certeza que o Evangelho nos dá. Francisco nos lembra que a oração não é monólogo, mas diálogo com um Pai que nos conhece pelo nome.<br><br>Que nos animemos a pedir, a buscar e a bater com perseverança, confiando que o Pai sabe o que precisamos antes mesmo de pedirmos.',
+  'A ressurreição é a nossa esperança. Bento XVI dizia que sem a ressurreição, o cristianismo seria apenas uma bela filosofia. Com ela, tudo muda: a morte não tem a última palavra.<br><br>Que esta fé nos conforte nas horas de luto e sofrimento, e nos encha de esperança ativa, que serve e constrói.',
+  'A missão universal nos pertence. João Paulo II repetiu incansavelmente: ide a todo o mundo! Não apenas os missionários, mas cada cristão em seu bairro, em sua família, em seu trabalho.<br><br>Que nos sintamos responsáveis pelo Evangelho e o levemos com humildade e alegria para onde Deus nos colocou.',
+  'O Natal é o anúncio de uma grande alegria para todo o povo. Francisco nos diz: não guardeis o Natal para vós. A alegria verdadeira é aquela que se compartilha com os mais pobres e solitários.<br><br>Que o Deus-conosco que celebramos seja reconhecido em cada rosto humano que encontramos no caminho.',
+  'No princípio era o Verbo — Deus não é silêncio, é Palavra que se dirige a nós. Bento XVI ensinava que toda a Escritura é essa Palavra de amor que Deus pronuncia sobre cada criatura.<br><br>Que abramos os Evangelhos com fé, pois em cada página Cristo nos fala pessoalmente e nos transforma.',
+  'O maior mandamento une amor a Deus e amor ao próximo. Francisco insiste que a fé sem obras é estéril — o cristão autêntico é aquele que vai para as periferias existenciais e cuida dos descartados.<br><br>Que hoje façamos um ato de amor concreto, pequeno que seja, em nome de Cristo.',
+  'Negar-se a si mesmo e tomar a cruz — palavras duras, mas libertadoras. João Paulo II ensinava que a cruz não é um peso que esmaga, mas o caminho que Cristo já percorreu à nossa frente.<br><br>Que aceitemos as nossas cruzes diárias com fé, sabendo que do outro lado está a ressurreição.',
+  'Sem mim nada podeis fazer — Jesus não nos pede autossuficiência, mas comunhão. Bento XVI destacava que permanecer na videira é a condição para dar fruto duradouro.<br><br>Que hoje renovemos nossa união com Cristo pela oração, pelos sacramentos e pela caridade fraterna.',
+  'Vós sois a luz do mundo — Jesus não diz "podereis ser", mas "sois". Francisco nos lembra que não precisamos esperar ser perfeitos para iluminar. A luz de Cristo brilha em nós desde o batismo.<br><br>Que não escondamos essa luz por medo ou vergonha. O mundo precisa de cristãos visíveis e corajosos.',
+  'A Eucaristia é o memorial vivo do amor de Cristo. João Paulo II dedicou uma encíclica inteira para dizer: a Eucaristia é o coração da Igreja, o alimento do caminho, o penhor da glória futura.<br><br>Que participemos da Missa com fé renovada, sabendo que Cristo se entrega a nós em cada celebração.',
+  'O amor fraterno é o sinal do discípulo. Francisco diz que a comunidade cristã deve ser reconhecível pelo amor — não pelas discussões ou pelo espírito de partido, mas pela unidade e pelo serviço.<br><br>Que hoje construamos pontes onde há divisão e sejamos instrumentos da paz de Cristo.',
+  'Buscar primeiro o Reino — ordem de prioridades que Jesus nos propõe. Bento XVI ensinava que quando Deus está no centro, tudo o mais encontra seu lugar natural.<br><br>Que comecemos o dia com oração, colocando nossa agenda nas mãos de Deus, e confiemos que Ele provê o necessário.'
+];
+
+// ── EVANGELHO DO DIA (100% offline) ──
+function carregarEvangelhoEReflexao(){
   const refEl = document.getElementById('ev-ref');
   const evEl  = document.getElementById('ev-txt');
   const rfxEl = document.getElementById('rfx-body');
-  const {iso,br,dia,mes,ano} = fmtData();
+  const dia   = new Date().getDate() - 1; // 0-30
+  const idx   = dia % EVANGELHOS.length;
 
-  // Banco de evangelhos fixos por dia do ano (amostra rotativa)
-  const evangelhosFallback=[
-    {ref:'Jo 3,16',txt:'"Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna."'},
-    {ref:'Mt 5,3-10',txt:'"Bem-aventurados os pobres em espírito, porque deles é o reino dos céus. Bem-aventurados os que choram, porque serão consolados. Bem-aventurados os mansos, porque herdarão a terra."'},
-    {ref:'Lc 15,11-32',txt:'"Um homem tinha dois filhos. O mais novo deles disse ao pai: Pai, dá-me a parte dos bens que me pertence. E o pai repartiu entre eles os seus bens. O filho pôde assim partir para uma região longínqua."'},
-    {ref:'Jo 15,9-12',txt:'"Como o Pai me amou, assim também eu vos amei; permanecei no meu amor. Se guardardes os meus mandamentos, permanecereis no meu amor. Este é o meu mandamento: amai-vos uns aos outros como eu vos amei."'},
-    {ref:'Mc 1,14-20',txt:'"Depois que João foi preso, Jesus foi para a Galileia e proclamava a Boa Nova de Deus: O tempo está cumprido e o Reino de Deus está próximo. Convertei-vos e crede na Boa Nova."'},
-    {ref:'Lc 6,27-38',txt:'"Amai os vossos inimigos, fazei o bem aos que vos odeiam, bendizei os que vos maldizem, orai pelos que vos maltratam."'},
-    {ref:'Jo 6,35-40',txt:'"Eu sou o pão da vida. Quem vem a mim não terá fome, e quem crê em mim nunca terá sede."'}
-  ];
-  const reflexoesFallback=[
-    'O amor de Deus não tem condições nem fronteiras. Jesus nos lembra que o Pai entregou o que tinha de mais precioso por cada um de nós. Como nos ensinou São João Paulo II: o homem não pode viver sem amor, pois foi criado para amar e ser amado.<br><br>Que esta Palavra nos mova a sair de nós mesmos e a amar com concretude — na família, no trabalho, nas pequenas situações do dia. O Evangelho não é teoria: é vida que transforma.',
-    'As bem-aventuranças são o retrato de Jesus e o programa do cristão. Bento XVI nos lembrou que ser pobre em espírito é reconhecer que tudo é dom de Deus — e isso nos liberta do egoísmo e nos abre ao próximo.<br><br>Peçamos hoje a graça de viver as bem-aventuranças não como utopia, mas como caminho concreto de santidade no cotidiano, como nos convida o Papa Francisco.',
-    'O pai da parábola corre ao encontro do filho — esta é a imagem de Deus que Jesus nos oferece. Não um Deus que pune, mas um Pai que espera, que perdoa, que celebra a volta de cada filho perdido.<br><br>Como ensinou Francisco: Deus não se cansa de perdoar; somos nós que nos cansamos de pedir perdão. Que esta cena toque nosso coração hoje.',
-    'Permanecer no amor de Cristo é a vocação central do cristão. Não se trata de um sentimento passageiro, mas de uma decisão diária de colocar Deus no centro da vida, como nos ensinou João Paulo II.<br><br>Que o mandamento novo do amor seja nossa resposta concreta ao Evangelho: amando os que estão perto e os que nos são difíceis de amar.',
-    'Jesus chama e o discípulo responde imediatamente — essa é a dinâmica da vocação cristã. Como disse Bento XVI, seguir Jesus não é aderir a uma ideia, mas encontrar uma Pessoa que dá sentido à vida.<br><br>Que hoje possamos ouvir essa chamada em nossa vida e responder com coragem, deixando o que nos impede de segui-Lo.',
-    'Amar os inimigos é o sinal mais alto do Evangelho. Francisco nos lembra que o cristão é chamado a ser um fermento de misericórdia no mundo, especialmente onde há conflito e divisão.<br><br>Peçamos hoje a graça de vencer o mal com o bem, de perdoar antes de ser pedido, de ser instrumentos de paz onde há discórdia.',
-    'Eu sou o pão da vida — Jesus se dá como alimento para nossa alma. A Eucaristia é o centro da vida cristã, onde Cristo se entrega completamente a nós.<br><br>Como ensinou João Paulo II, a Eucaristia é o coração da Igreja. Que possamos nos alimentar deste pão com fé e gratidão, deixando que Jesus nos transforme por dentro.'
-  ];
-
-  // Mostrar fallback imediatamente (garante que sempre aparece)
-  const idxFallback = new Date().getDate() % evangelhosFallback.length;
-  refEl.textContent = evangelhosFallback[idxFallback].ref;
+  refEl.textContent = EVANGELHOS[idx].ref;
   evEl.removeAttribute('style');
-  evEl.textContent = evangelhosFallback[idxFallback].txt;
-  rfxEl.innerHTML = '<div class="rfx-body">' + reflexoesFallback[idxFallback] + '</div>';
-
-  // Tentar melhorar com APIs em segundo plano (sem travar a tela)
-  let evRef='', evTxt='';
-  try{
-    const r=await fetch(`https://liturgia.paroquias.org/api/${ano}/${mes}/${dia}`,{signal:AbortSignal.timeout(5000)});
-    if(r.ok){
-      const j=await r.json();
-      const g=j?.evangelho||j?.gospel;
-      if(g){evRef=g.referencia||g.reference||'';evTxt=g.texto||g.text||'';}
-    }
-  }catch(_){}
-
-  if(!evTxt){
-    try{
-      for(const url of [`https://evangelizo.org/api/pt/${iso}`,`https://www.evangelizo.org/api/pt/${iso}`]){
-        try{
-          const r=await fetch(url,{signal:AbortSignal.timeout(4000)});
-          if(!r.ok) continue;
-          const j=await r.json();
-          const g=j?.liturgy?.gospel||j?.gospel||j?.data?.gospel;
-          if(g?.text){evRef=g.reference||'';evTxt=g.text;break;}
-        }catch(_){}
-      }
-    }catch(_){}
-  }
-
-  // Se API retornou algo, atualizar
-  if(evTxt && evTxt.length>10){
-    refEl.textContent = evRef||'Evangelho do Dia';
-    evEl.textContent = evTxt;
-  }
+  evEl.textContent  = EVANGELHOS[idx].txt;
+  rfxEl.innerHTML   = '<div class="rfx-body">' + REFLEXOES[idx % REFLEXOES.length] + '</div>';
 }
 
-// ── LITURGIA DAS HORAS ──
-async function carregarLiturgiaHoras(){
-  const el=document.getElementById('lit-horas-txt');
-  const {br,dia,mes,ano}=fmtData();
-  el.style.cssText='color:rgba(247,240,227,.4);font-style:italic;';
-  el.textContent='Carregando Liturgia das Horas...';
+// ── LITURGIA DAS HORAS (100% offline) ──
+function carregarLiturgiaHoras(){
+  const el = document.getElementById('lit-horas-txt');
+  const diasNome=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const dow = new Date().getDay();
+  const nomeDia = diasNome[dow];
+  const {br} = fmtData();
   document.getElementById('lit1').classList.add('op');
-
-  let carregou=false;
-
-  // Tentar API pública de liturgia
-  try{
-    const url=`https://liturgia.paroquias.org/api/${ano}/${mes}/${dia}`;
-    const r=await fetch(url,{signal:AbortSignal.timeout(6000)});
-    if(r.ok){
-      const j=await r.json();
-      if(j){
-        let html='';
-        if(j.tempo_liturgico) html+=`<strong style="color:var(--go)">⛪ ${j.tempo_liturgico}</strong><br>`;
-        if(j.cor) html+=`<em style="color:rgba(201,168,76,.6)">Cor litúrgica: ${j.cor}</em><br><br>`;
-        if(j.laudes){
-          html+=`<strong style="color:var(--go);display:block;margin-top:8px">🌅 LAUDES</strong>`;
-          html+=String(j.laudes).replace(/\n/g,'<br>');
-        }
-        if(j.vesperas){
-          html+=`<strong style="color:var(--go);display:block;margin-top:12px">🌆 VÉSPERAS</strong>`;
-          html+=String(j.vesperas).replace(/\n/g,'<br>');
-        }
-        if(html){el.removeAttribute('style');el.innerHTML=html;carregou=true;}
-      }
-    }
-  }catch(_){}
-
-  if(!carregou){
-    // Conteúdo fixo rico baseado no dia da semana
-    const dias=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-    const dow=new Date().getDay();
-    const nomeDia=dias[dow];
-    const {br}=fmtData();
-    el.removeAttribute('style');
-    el.innerHTML=`
+  el.removeAttribute('style');
+  el.innerHTML=`
 <strong style="color:var(--go)">🌅 LAUDES — ${nomeDia}</strong><br>
 <em style="color:rgba(201,168,76,.6)">${br}</em><br><br>
 <strong style="color:var(--go)">Versículo de abertura:</strong><br>
@@ -1452,22 +1442,38 @@ E a noite se convida.<br><br>
 Minha alma tem sede de ti, meu corpo anseia por ti,<br>
 como terra árida, ressequida, sem água.<br>
 Assim te contemplei no santuário,<br>
-vendo o teu poder e a tua glória.<br><br>
+vendo o teu poder e a tua glória.<br>
+Porque o teu amor vale mais que a vida,<br>
+os meus lábios te louvarão.<br><br>
 
 <strong style="color:var(--go)">Cântico de Zacarias (Lc 1,68-79):</strong><br>
 Bendito seja o Senhor, Deus de Israel,<br>
 porque visitou e redimiu o seu povo,<br>
 e suscitou para nós um poder de salvação<br>
-na casa de Davi, seu servo.<br><br>
+na casa de Davi, seu servo,<br>
+para nos salvar dos nossos inimigos<br>
+e da mão de todos os que nos odeiam.<br><br>
 
 V. O Senhor nos conceda um dia santo e em paz.<br>
 R. Amém.<br><br>
+
+<strong style="color:var(--go)">🌤️ HORA MÉDIA — ${nomeDia}</strong><br><br>
+
+<strong style="color:var(--go)">Versículo:</strong><br>
+V. Dignai-vos, ó Deus, em me socorrer.<br>
+R. Senhor, apressai-vos em me ajudar.<br><br>
+Que a nossa oração chegue até ti, Senhor;<br>
+inclina o teu ouvido ao nosso clamor.<br><br>
+V. O Senhor é meu auxílio.<br>
+R. Em ti confio, ó meu Deus.<br><br>
 
 <strong style="color:var(--go)">🌆 VÉSPERAS — ${nomeDia}</strong><br><br>
 
 <strong style="color:var(--go)">Versículo de abertura:</strong><br>
 V. Dignai-vos, ó Deus, em me socorrer.<br>
-R. Senhor, apressai-vos em me ajudar.<br><br>
+R. Senhor, apressai-vos em me ajudar.<br>
+Glória ao Pai, ao Filho e ao Espírito Santo.<br>
+Como era no princípio, agora e sempre, por todos os séculos. Amém.<br><br>
 
 <strong style="color:var(--go)">Hino das Vésperas:</strong><br>
 Ao declinar o dia, ó Deus,<br>
@@ -1479,98 +1485,114 @@ e a manhã de louvor.<br><br>
 Disse o Senhor ao meu Senhor:<br>
 Assenta-te à minha direita,<br>
 até que eu ponha os teus inimigos<br>
-como escabelo dos teus pés.<br><br>
+como escabelo dos teus pés.<br>
+O cetro do teu poder envia o Senhor de Sião:<br>
+domina no meio dos teus inimigos!<br><br>
 
 <strong style="color:var(--go)">Magnificat (Lc 1,46-55):</strong><br>
 A minha alma glorifica ao Senhor,<br>
 e o meu espírito exulta de alegria em Deus, meu Salvador.<br>
 Porque olhou para a humildade de sua serva.<br>
-Doravante todas as gerações me chamarão bem-aventurada.<br><br>
+Doravante todas as gerações me chamarão bem-aventurada,<br>
+porque o Todo-Poderoso fez em mim maravilhas.<br>
+Santo é o seu nome.<br><br>
 
 V. Que o Senhor nos abençoe e nos guarde nesta noite.<br>
-R. Amém.`;
-  }
+R. Amém.<br><br>
+
+<strong style="color:var(--go)">🌃 COMPLETAS — ${nomeDia}</strong><br><br>
+V. Dignai-vos, ó Deus, em me socorrer.<br>
+R. Senhor, apressai-vos em me ajudar.<br><br>
+<strong style="color:var(--go)">Salmo 90 — Sob a proteção do Altíssimo:</strong><br>
+Aquele que habita sob o abrigo do Altíssimo,<br>
+à sombra do Todo-Poderoso repousa.<br>
+Digo ao Senhor: tu és o meu refúgio e a minha fortaleza,<br>
+o meu Deus em quem confio.<br><br>
+<em style="color:var(--gl2)">Antífona Final:</em><br>
+Protegei-nos, Senhor, enquanto velamos,<br>
+guardai-nos enquanto dormimos,<br>
+para que vigilantes estejamos com Cristo<br>
+e em paz repousemos. Amém.`;
 }
 
-// ── LITURGIA DIÁRIA ──
-async function carregarLiturgiaDiaria(){
-  const el=document.getElementById('lit-diaria-txt');
-  const {br,dia,mes,ano}=fmtData();
-  el.style.cssText='color:rgba(247,240,227,.4);font-style:italic;';
-  el.textContent='Carregando leituras do dia...';
+// ── LITURGIA DIÁRIA (100% offline) ──
+function carregarLiturgiaDiaria(){
+  const el  = document.getElementById('lit-diaria-txt');
+  const {br}= fmtData();
+  const dow = new Date().getDay();
   document.getElementById('lit2').classList.add('op');
 
-  let carregou=false;
+  const tempos =['Tempo Pascal','Tempo Comum','Tempo Comum','Tempo Comum','Tempo Comum','Tempo Comum','Tempo Comum'];
+  const cores  =['Branco','Verde','Verde','Verde','Verde','Verde','Verde'];
+  const leituras=[
+    // Domingo
+    {l1:'At 5,27-32.40-41',tl1:'Atos dos Apóstolos',
+     tl1txt:'Naqueles dias, os apóstolos foram levados perante o Sinédrio. O sumo sacerdote os interrogou, dizendo: Não vos proibimos expressamente de ensinar em nome de Jesus? Pedro e os apóstolos responderam: Mais vale obedecer a Deus do que aos homens.',
+     sl:'Sl 29',rsl:'Exaltai o Senhor, nosso Deus!',
+     sltxt:'Exaltar-te-ei, Senhor, porque me tiraste das profundezas. Senhor meu Deus, a ti clamei e tu me curaste. Senhor, tiraste da morte a minha alma, preservaste a minha vida entre os que descem ao abismo.',
+     ev:'Jo 21,1-19',
+     evtxt:'Naquele tempo, Jesus manifestou-se outra vez aos discípulos, junto ao mar de Tiberíades. Simão Pedro disse: Vou pescar. Os outros disseram: Também vamos contigo. Jesus disse-lhe: Simão, filho de João, tu me amas? Pedro disse: Senhor, tu sabes que te amo. Jesus disse-lhe: Apascenta as minhas ovelhas.'},
+    // Segunda
+    {l1:'At 6,8-15',tl1:'Atos dos Apóstolos',
+     tl1txt:'Estêvão, cheio de graça e de poder, fazia grandes prodígios e sinais no povo. Alguns se levantaram a disputar com ele, mas não podiam resistir à sabedoria e ao espírito com que falava.',
+     sl:'Sl 118',rsl:'Felizes os que caminham na lei do Senhor.',
+     sltxt:'Felizes os de conduta irrepreensível, os que caminham na lei do Senhor. Felizes os que guardam os seus preceitos e o buscam de todo o coração.',
+     ev:'Jo 6,22-29',
+     evtxt:'Naquele tempo, a multidão perguntou a Jesus: Que havemos de fazer para realizar as obras de Deus? Jesus respondeu: A obra de Deus é esta: que creiais naquele que ele enviou.'},
+    // Terça
+    {l1:'At 7,51—8,1',tl1:'Atos dos Apóstolos',
+     tl1txt:'Naqueles dias, Estêvão disse ao povo: Vós sois duros de cerviz! Resistis sempre ao Espírito Santo. Enquanto o apedrejavam, Estêvão orava: Senhor Jesus, recebe o meu espírito. E expirando, disse em alta voz: Senhor, não lhes imputes este pecado.',
+     sl:'Sl 30',rsl:'Em tuas mãos, Senhor, entrego o meu espírito.',
+     sltxt:'Em ti, Senhor, me refugiei; nunca seja confundido. Livra-me por tua justiça. Nas tuas mãos entrego o meu espírito; tu me resgatas, Senhor, Deus fiel.',
+     ev:'Jo 6,30-35',
+     evtxt:'Naquele tempo, a multidão disse a Jesus: Que sinal fazes tu para vermos e crermos em ti? Nossos pais comeram o maná no deserto. Jesus respondeu: Eu sou o pão da vida. Quem vem a mim não terá fome.'},
+    // Quarta
+    {l1:'At 8,1-8',tl1:'Atos dos Apóstolos',
+     tl1txt:'Naquele dia começou uma grande perseguição contra a Igreja de Jerusalém. Filipe desceu à cidade da Samaria e ali pregava Cristo. As multidões prestavam atenção unânime ao que Filipe dizia, ao ouvirem e verem os sinais que ele realizava.',
+     sl:'Sl 65',rsl:'Que toda a terra vos aclamem, ó Deus.',
+     sltxt:'Aclamai a Deus, toda a terra, cantai a glória do seu nome, dai-lhe gloriosa honra. Dizei a Deus: Como são temíveis as tuas obras!',
+     ev:'Jo 6,35-40',
+     evtxt:'Naquele tempo, disse Jesus: Eu sou o pão da vida. Quem vem a mim não terá fome; quem crê em mim nunca terá sede. Esta é a vontade do meu Pai: que todo aquele que vir o Filho e nele crer tenha a vida eterna.'},
+    // Quinta
+    {l1:'At 8,26-40',tl1:'Atos dos Apóstolos',
+     tl1txt:'O anjo do Senhor falou a Filipe: Levanta-te e vai para o sul. Filipe correu e ouviu o etíope lendo o profeta Isaías. Filipe começou por este trecho da Escritura e anunciou-lhe a Boa Nova de Jesus. Ambos desceram à água, e Filipe o batizou.',
+     sl:'Sl 65',rsl:'Que toda a terra vos aclamem, ó Deus.',
+     sltxt:'Vinde e ouvi, todos vós que temeis a Deus; contarei o que ele fez por minha alma. Clamei a ele com a minha boca e já estava o louvor na minha língua.',
+     ev:'Jo 6,44-51',
+     evtxt:'Naquele tempo, disse Jesus: Ninguém pode vir a mim se o Pai que me enviou não o atrair. Eu sou o pão vivo descido do céu. Se alguém comer deste pão viverá para sempre.'},
+    // Sexta
+    {l1:'At 9,1-20',tl1:'Atos dos Apóstolos',
+     tl1txt:'Saulo, ainda respirando ameaças e morte contra os discípulos do Senhor, caiu por terra e ouviu uma voz: Saulo, Saulo, por que me persegues? Ele perguntou: Quem és tu, Senhor? A resposta foi: Eu sou Jesus, a quem tu persegues.',
+     sl:'Sl 116',rsl:'Ide por todo o mundo e proclamai o Evangelho.',
+     sltxt:'Louvai o Senhor, todas as nações; glorificai-o, todos os povos. Porque grande é o seu amor para conosco e a sua fidelidade é eterna.',
+     ev:'Jo 6,52-59',
+     evtxt:'Naquele tempo, os judeus discutiam entre si, dizendo: Como pode este dar-nos a comer a sua carne? Jesus disse: Em verdade vos digo: se não comerdes a carne do Filho do Homem e não beberdes o seu sangue, não tereis vida em vós.'},
+    // Sábado
+    {l1:'At 9,31-42',tl1:'Atos dos Apóstolos',
+     tl1txt:'A Igreja gozava de paz em toda a Judeia, Galileia e Samaria. Edificava-se e andava no temor do Senhor, e crescia pela consolação do Espírito Santo. Pedro percorria todas as regiões e curou um paralítico chamado Enéias.',
+     sl:'Sl 115',rsl:'Andarei na presença do Senhor na terra dos viventes.',
+     sltxt:'Tenho fé, por isso falo, mesmo quando dizia: Estou muito aflito. Precioso aos olhos do Senhor é a morte dos seus santos.',
+     ev:'Jo 6,60-69',
+     evtxt:'Naquele tempo, muitos discípulos de Jesus disseram: Esta linguagem é dura; quem pode ouvi-la? Jesus perguntou: Isso vos escandaliza? Simão Pedro respondeu: Senhor, a quem iríamos nós? Tu tens palavras de vida eterna.'}
+  ];
 
-  // Tentar API pública
-  try{
-    const url=`https://liturgia.paroquias.org/api/${ano}/${mes}/${dia}`;
-    const r=await fetch(url,{signal:AbortSignal.timeout(6000)});
-    if(r.ok){
-      const j=await r.json();
-      if(j){
-        let html='';
-        if(j.tempo_liturgico) html+=`<strong style="color:var(--go)">⛪ Tempo: ${j.tempo_liturgico}</strong><br>`;
-        if(j.cor) html+=`<strong style="color:var(--go)">🎨 Cor litúrgica: ${j.cor}</strong><br>`;
-        if(j.santo) html+=`<strong style="color:var(--go)">✨ ${j.santo}</strong><br>`;
-        html+='<br>';
-        if(j.primeira_leitura){
-          html+=`<strong style="color:var(--go);display:block">📖 1ª LEITURA</strong>`;
-          if(j.primeira_leitura.referencia) html+=`<em style="color:var(--gl2)">${j.primeira_leitura.referencia}</em><br>`;
-          html+=String(j.primeira_leitura.texto||'').replace(/\n/g,'<br>')+'<br><br>';
-        }
-        if(j.salmo){
-          html+=`<strong style="color:var(--go);display:block">🎵 SALMO RESPONSORIAL</strong>`;
-          if(j.salmo.referencia) html+=`<em style="color:var(--gl2)">${j.salmo.referencia}</em><br>`;
-          if(j.salmo.resposta) html+=`<strong>R. ${j.salmo.resposta}</strong><br>`;
-          html+=String(j.salmo.texto||'').replace(/\n/g,'<br>')+'<br><br>';
-        }
-        if(j.segunda_leitura){
-          html+=`<strong style="color:var(--go);display:block">📖 2ª LEITURA</strong>`;
-          if(j.segunda_leitura.referencia) html+=`<em style="color:var(--gl2)">${j.segunda_leitura.referencia}</em><br>`;
-          html+=String(j.segunda_leitura.texto||'').replace(/\n/g,'<br>')+'<br><br>';
-        }
-        if(j.evangelho){
-          html+=`<strong style="color:var(--go);display:block">✝ EVANGELHO</strong>`;
-          if(j.evangelho.referencia) html+=`<em style="color:var(--gl2)">${j.evangelho.referencia}</em><br>`;
-          html+=String(j.evangelho.texto||'').replace(/\n/g,'<br>');
-        }
-        if(html.length>50){el.removeAttribute('style');el.innerHTML=html;carregou=true;}
-      }
-    }
-  }catch(_){}
-
-  if(!carregou){
-    // Conteúdo rico fixo como fallback
-    const {br}=fmtData();
-    const dow=new Date().getDay();
-    const tempos=['Tempo Comum','Tempo Comum','Tempo Comum','Tempo Comum','Tempo Comum','Tempo Comum','Tempo Comum'];
-    const cores=['Branco/Verde','Verde','Verde','Verde','Verde','Verde','Verde'];
-    el.removeAttribute('style');
-    el.innerHTML=`
-<strong style="color:var(--go)">⛪ ${tempos[dow]}</strong><br>
-<strong style="color:var(--go)">🎨 Cor litúrgica: ${cores[dow]}</strong><br>
+  const L = leituras[dow];
+  el.removeAttribute('style');
+  el.innerHTML=`
+<strong style="color:var(--go)">⛪ ${tempos[dow]}</strong> &nbsp;
+<strong style="color:var(--go)">🎨 Cor: ${cores[dow]}</strong><br>
 <em style="color:rgba(201,168,76,.5);font-size:.8rem;">${br}</em><br><br>
 
-<strong style="color:var(--go)">📖 1ª LEITURA — At 13,14.43-52</strong><br>
-<em style="color:var(--gl2)">Atos dos Apóstolos</em><br>
-Naqueles dias, Paulo e Barnabé chegaram a Antioquia da Pisídia e foram à sinagoga no sábado. Após a reunião, muitos judeus e prosélitos piedosos seguiram Paulo e Barnabé, que continuavam a falar com eles e os exortavam a permanecer na graça de Deus.<br><br>
+<strong style="color:var(--go);display:block">📖 1ª LEITURA — ${L.l1}</strong>
+<em style="color:var(--gl2)">${L.tl1}</em><br>
+${L.tl1txt}<br><br>
 
-<strong style="color:var(--go)">🎵 SALMO RESPONSORIAL — Sl 99</strong><br>
-<em style="color:var(--gl2)">Salmo 99(100)</em><br>
-<strong>R. Somos o seu povo e o rebanho de seu pasto.</strong><br>
-Aclamai o Senhor, vós todos da terra,<br>
-servi ao Senhor com alegria,<br>
-vinde à sua presença com júbilo. R.<br><br>
-Sabei que o Senhor é Deus,<br>
-ele nos criou e somos seus,<br>
-seu povo e o rebanho de seu pasto. R.<br><br>
+<strong style="color:var(--go);display:block">🎵 SALMO RESPONSORIAL — ${L.sl}</strong>
+<strong>R. ${L.rsl}</strong><br>
+${L.sltxt}<br><br>
 
-<strong style="color:var(--go)">✝ EVANGELHO — Jo 10,27-30</strong><br>
-<em style="color:var(--gl2)">João 10,27-30</em><br>
-Naquele tempo, disse Jesus: "As minhas ovelhas escutam a minha voz; eu as conheço e elas me seguem. Eu lhes dou a vida eterna; elas jamais perecerão e ninguém as arrebatará da minha mão. Meu Pai, que mas deu, é maior que tudo, e ninguém pode arrebatá-las da mão do meu Pai. Eu e o Pai somos um."<br><br>
-<em style="color:rgba(201,168,76,.4);font-size:.78rem;">⚠ Conteúdo de exemplo. Conecte-se à internet para as leituras do dia.</em>`;
-  }
+<strong style="color:var(--go);display:block">✝ EVANGELHO — ${L.ev}</strong>
+${L.evtxt}`;
 }
 
 carregarEvangelhoEReflexao();
