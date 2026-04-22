@@ -12,13 +12,13 @@
   --cr:#F7F0E3;--cd:#EDE0C4;--ink:#0A1A12;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html{height:100%;}
+html{height:100%;overscroll-behavior:none;}
 body{
   font-family:'Lora',Georgia,serif;
   background:var(--gd);color:var(--cr);
   max-width:430px;margin:0 auto;
   height:100%;display:flex;flex-direction:column;
-  overflow:hidden;position:relative;
+  overflow:hidden;position:relative;overscroll-behavior:none;
 }
 body::before{
   content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -76,7 +76,7 @@ nav::-webkit-scrollbar{display:none;}
 .tb.on{color:var(--go);border-bottom-color:var(--go);}
 .tb:hover{color:var(--gl2);}
 
-main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.2) transparent;}
+main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.2) transparent;overscroll-behavior-y:contain;}
 main::-webkit-scrollbar{width:3px;}
 main::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px;}
 
@@ -1068,40 +1068,12 @@ const now = new Date();
 document.getElementById('hd-date').innerHTML = `${dias[now.getDay()]}<br>${now.getDate()} de ${meses[now.getMonth()]}`;
 
 // ── NAV ──
-let _secAtual = 'home';
-
 function go(id,btn){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
-  _secAtual = id;
-  // Empurra estado no histórico para evitar que swipe/back feche o app
-  history.pushState({sec: id}, '', '');
 }
-
-// Intercepta botão voltar do sistema/swipe — volta para home em vez de fechar
-window.addEventListener('popstate', function(e){
-  if(_secAtual !== 'home'){
-    const homeBtn = document.querySelector('.tb');
-    go('home', homeBtn);
-    history.pushState({sec:'home'}, '', '');
-  } else {
-    history.pushState({sec:'home'}, '', '');
-  }
-});
-
-// Bloqueia swipe para baixo que causa pull-to-refresh ou saída do app
-(function(){
-  let _ty = 0;
-  document.addEventListener('touchstart', function(e){ _ty = e.touches[0].clientY; }, {passive:true});
-  document.addEventListener('touchmove', function(e){
-    const dy = e.touches[0].clientY - _ty;
-    if(dy > 0 && (window.scrollY === 0 || document.documentElement.scrollTop === 0)){
-      e.preventDefault();
-    }
-  }, {passive:false});
-})();
 
 function toggleOrac(id){ document.getElementById(id).classList.toggle('op'); }
 function toggleOf(id){ document.getElementById(id).classList.toggle('op'); }
