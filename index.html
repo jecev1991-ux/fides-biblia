@@ -1068,12 +1068,40 @@ const now = new Date();
 document.getElementById('hd-date').innerHTML = `${dias[now.getDay()]}<br>${now.getDate()} de ${meses[now.getMonth()]}`;
 
 // ── NAV ──
+let _secAtual = 'home';
+
 function go(id,btn){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
+  _secAtual = id;
+  // Empurra estado no histórico para evitar que swipe/back feche o app
+  history.pushState({sec: id}, '', '');
 }
+
+// Intercepta botão voltar do sistema/swipe — volta para home em vez de fechar
+window.addEventListener('popstate', function(e){
+  if(_secAtual !== 'home'){
+    const homeBtn = document.querySelector('.tb');
+    go('home', homeBtn);
+    history.pushState({sec:'home'}, '', '');
+  } else {
+    history.pushState({sec:'home'}, '', '');
+  }
+});
+
+// Bloqueia swipe para baixo que causa pull-to-refresh ou saída do app
+(function(){
+  let _ty = 0;
+  document.addEventListener('touchstart', function(e){ _ty = e.touches[0].clientY; }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    const dy = e.touches[0].clientY - _ty;
+    if(dy > 0 && (window.scrollY === 0 || document.documentElement.scrollTop === 0)){
+      e.preventDefault();
+    }
+  }, {passive:false});
+})();
 
 function toggleOrac(id){ document.getElementById(id).classList.toggle('op'); }
 function toggleOf(id){ document.getElementById(id).classList.toggle('op'); }
